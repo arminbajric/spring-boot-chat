@@ -12,6 +12,17 @@ public class ChatMessageModel {
     private String text;
     private String author;
     private Date createDate;
+    private String type;
+
+
+    public String toToString() {
+        return "ChatMessageModel{" +
+                "text='" + text + '\'' +
+                ", author='" + author + '\'' +
+                ", createDate=" + createDate +
+                ", type='" + type + '\'' +
+                '}';
+    }
 
     public ChatMessageModel() {
     }
@@ -20,6 +31,13 @@ public class ChatMessageModel {
         this.text = text;
         this.author = author;
         this.createDate = createDate;
+    }
+
+    public ChatMessageModel(String text, String author, Date createDate, String type) {
+        this.text = text;
+        this.author = author;
+        this.createDate = createDate;
+        this.type = type;
     }
 
     public String getText() {
