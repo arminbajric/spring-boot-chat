@@ -69,11 +69,12 @@ public class ChatMessageController {
 
 
     @RequestMapping(value = "/messages", method = RequestMethod.POST)
-    @MessageMapping("/newMessage")
-    @SendTo("/topic/newMessage")
-    public ChatMessage save(ChatMessageModel chatMessageModel) throws InterruptedException {
+    @MessageMapping("/newMessage/{user}/{type}")
+    @SendTo("/topic/newMessage/{user}/{type}")
+
+    public ChatMessage save(ChatMessageModel chatMessageModel,@PathVariable(name = "type")String destination,@PathVariable(name = "user")String user) throws InterruptedException {
         Thread.sleep(1000);
-        ChatMessageModel chatMessage = new ChatMessageModel(chatMessageModel.getText(), chatMessageModel.getAuthor(), new Date());
+        ChatMessageModel chatMessage = new ChatMessageModel(chatMessageModel.getText(), chatMessageModel.getAuthor(), new Date(),chatMessageModel.getType());
         ChatMessageModel message = chatMessageRepository.save(chatMessage);
         List<ChatMessageModel> chatMessageModelList = chatMessageRepository.findAll(new PageRequest(0, 5, Sort.Direction.DESC, "createDate")).getContent();
         return new ChatMessage(chatMessageModelList.toString());
@@ -82,6 +83,12 @@ public class ChatMessageController {
     @RequestMapping(value = "/messages", method = RequestMethod.GET)
     public HttpEntity list() {
         List<ChatMessageModel> chatMessageModelList = chatMessageRepository.findAll(new PageRequest(0, 5, Sort.Direction.DESC, "createDate")).getContent();
+        return new ResponseEntity(chatMessageModelList, HttpStatus.OK);
+    }
+    @RequestMapping(value = "/conversation", method = RequestMethod.GET)
+    public HttpEntity getConversation(@RequestParam(name = "user")String user,@RequestParam(name = "type")String destination) {
+        System.out.println(destination+"  "+user);
+        List<ChatMessageModel> chatMessageModelList = chatMessageRepository.getByTypeAndAuthor(destination,user);
         return new ResponseEntity(chatMessageModelList, HttpStatus.OK);
     }
 
@@ -95,11 +102,6 @@ public class ChatMessageController {
     @MessageMapping("/newUsers")
     @SendTo("/topic/users")
     public HttpEntity getOnline( ChatMessageModel chatMessageModel) throws InterruptedException {
-        Thread.sleep(1000);
-        System.out.println("Activateddd");
-
         return new ResponseEntity(onlineRepository.findAll(),HttpStatus.OK) ;
-
-
     }
 }

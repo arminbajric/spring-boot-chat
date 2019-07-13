@@ -13,7 +13,7 @@ public class ChatMessageModel {
     private String author;
     private Date createDate;
     private String type;
-
+    private String to;
 
     public String toToString() {
         return "ChatMessageModel{" +
@@ -25,6 +25,23 @@ public class ChatMessageModel {
     }
 
     public ChatMessageModel() {
+    }
+    
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
     }
 
     public ChatMessageModel(String text, String author, Date createDate) {
