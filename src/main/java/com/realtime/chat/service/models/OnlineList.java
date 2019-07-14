@@ -2,7 +2,7 @@ package com.realtime.chat.service.models;
 
 public class OnlineList {
     String username;
-    boolean online;
+    String email;
 
     public String getUsername() {
         return username;
@@ -12,11 +12,11 @@ public class OnlineList {
         this.username = username;
     }
 
-    public boolean isOnline() {
-        return online;
+    public String getEmail() {
+        return email;
     }
 
-    public void setOnline(boolean online) {
-        this.online = online;
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

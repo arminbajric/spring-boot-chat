@@ -1,11 +1,9 @@
 package com.realtime.chat.service.controllers;
 
-import com.realtime.chat.service.models.ChatMessage;
-import com.realtime.chat.service.models.ChatMessageModel;
-import com.realtime.chat.service.models.OnlineList;
-import com.realtime.chat.service.models.OnlineUsers;
+import com.realtime.chat.service.models.*;
 import com.realtime.chat.service.repositories.ChatMessageRepository;
 import com.realtime.chat.service.repositories.OnlineRepository;
+import com.realtime.chat.service.repositories.UsersRepository;
 import com.realtime.chat.service.services.OnlinePoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -17,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -42,21 +41,28 @@ public class ChatMessageController {
     private OnlinePoolService onlinePoolService;
     @Autowired
     private OnlineRepository onlineRepository;
+    @Autowired
+    private UsersRepository usersRepository;
+    @Autowired
+    private SimpMessagingTemplate messageSender;
     @EventListener
+
     public void onDisconnectEvent(SessionDisconnectEvent event) {
         Message msg = event.getMessage();
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(msg);
         String sessionId = accessor.getSessionId();
-        System.out.println("Disconnecting "+sessionId);
+
         onlinePoolService.removeUserFromPool(sessionId);
+      messageSender.convertAndSend("/topic/users",onlinePoolService.getOnlineUsers());
     }
     @EventListener
     public void onConnectEvent(SessionConnectEvent session) {
         Message msg = session.getMessage();
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(msg);
-        String username = accessor.getNativeHeader("username").get(0);
-        System.out.println("Incoming "+username);
-        onlinePoolService.saveNewuser(username,accessor.getSessionId());
+        String username = accessor.getNativeHeader("email").get(0);
+
+
+        onlinePoolService.saveNewuser(usersRepository.getByEmail(username).getUsername(),usersRepository.getByEmail(username).getEmail(),accessor.getSessionId());
 
     }
     @RequestMapping("/")
@@ -69,15 +75,15 @@ public class ChatMessageController {
 
 
     @RequestMapping(value = "/messages", method = RequestMethod.POST)
-    @MessageMapping("/newMessage/{user}/{type}")
-    @SendTo("/topic/newMessage/{user}/{type}")
+    @MessageMapping("/newMessage/{room}")
+    @SendTo("/topic/newMessage/{room}")
+    public  HttpEntity save(ChatMessageModel chatMessageModel,@PathVariable(name = "room")String room) throws InterruptedException {
 
-    public ChatMessage save(ChatMessageModel chatMessageModel,@PathVariable(name = "type")String destination,@PathVariable(name = "user")String user) throws InterruptedException {
-        Thread.sleep(1000);
-        ChatMessageModel chatMessage = new ChatMessageModel(chatMessageModel.getText(), chatMessageModel.getAuthor(), new Date(),chatMessageModel.getType());
+        System.out.println(room);
+        ChatMessageModel chatMessage = new ChatMessageModel(chatMessageModel.getText(), chatMessageModel.getAuthor(), new Date(),chatMessageModel.getRoom(),usersRepository.getByEmail(chatMessageModel.getAuthor()).getUsername());
         ChatMessageModel message = chatMessageRepository.save(chatMessage);
-        List<ChatMessageModel> chatMessageModelList = chatMessageRepository.findAll(new PageRequest(0, 5, Sort.Direction.DESC, "createDate")).getContent();
-        return new ChatMessage(chatMessageModelList.toString());
+
+        return  new ResponseEntity(chatMessageRepository.getChatMessageModelsByRoom(chatMessageModel.getRoom()),HttpStatus.OK);
     }
 
     @RequestMapping(value = "/messages", method = RequestMethod.GET)
@@ -85,9 +91,14 @@ public class ChatMessageController {
         List<ChatMessageModel> chatMessageModelList = chatMessageRepository.findAll(new PageRequest(0, 5, Sort.Direction.DESC, "createDate")).getContent();
         return new ResponseEntity(chatMessageModelList, HttpStatus.OK);
     }
+    @RequestMapping(value = "/messages/{room}", method = RequestMethod.GET)
+    public HttpEntity list(@PathVariable String room) {
+        List<ChatMessageModel> chatMessageModelList = chatMessageRepository.getChatMessageModelsByRoom(room);
+        return new ResponseEntity(chatMessageModelList, HttpStatus.OK);
+    }
     @RequestMapping(value = "/conversation", method = RequestMethod.GET)
     public HttpEntity getConversation(@RequestParam(name = "user")String user,@RequestParam(name = "type")String destination) {
-        System.out.println(destination+"  "+user);
+
         List<ChatMessageModel> chatMessageModelList = chatMessageRepository.getByTypeAndAuthor(destination,user);
         return new ResponseEntity(chatMessageModelList, HttpStatus.OK);
     }
@@ -103,5 +114,28 @@ public class ChatMessageController {
     @SendTo("/topic/users")
     public HttpEntity getOnline( ChatMessageModel chatMessageModel) throws InterruptedException {
         return new ResponseEntity(onlineRepository.findAll(),HttpStatus.OK) ;
+    }
+    @RequestMapping(value = "/users",method = RequestMethod.GET)
+    public HttpEntity getOnlineUsers(){
+        return new ResponseEntity((onlinePoolService.getOnlineUsers()),HttpStatus.OK);
+    }
+    @RequestMapping(value = "/room",method = RequestMethod.GET)
+    public HttpEntity getConversationRoom(@RequestParam(name="users")String users){
+        String[] user=users.split(" ");
+
+        String newUsers=user[1].concat(" "+user[0]);
+        if(onlinePoolService.checkIfRoomExists(users))
+        {
+            return  new ResponseEntity(onlinePoolService.getRoom(users),HttpStatus.OK);
+        }
+        else if(onlinePoolService.checkIfRoomExists(newUsers)){
+            return  new ResponseEntity(onlinePoolService.getRoom(newUsers),HttpStatus.OK);
+        }
+        else{
+            onlinePoolService.saveRoom(new ChatRoom(users));
+            return  new ResponseEntity(new ChatRoom(users),HttpStatus.OK);
+        }
+
+
     }
 }

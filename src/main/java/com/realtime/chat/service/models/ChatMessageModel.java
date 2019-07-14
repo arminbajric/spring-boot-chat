@@ -13,7 +13,24 @@ public class ChatMessageModel {
     private String author;
     private Date createDate;
     private String type;
-    private String to;
+    private String room;
+    private String username;
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public ChatMessageModel(String text, String author, Date createDate, String room, String username) {
+        this.text = text;
+        this.author = author;
+        this.createDate = createDate;
+        this.room = room;
+        this.username = username;
+    }
 
     public String toToString() {
         return "ChatMessageModel{" +
@@ -26,7 +43,14 @@ public class ChatMessageModel {
 
     public ChatMessageModel() {
     }
-    
+
+    public String getRoom() {
+        return room;
+    }
+
+    public void setRoom(String room) {
+        this.room = room;
+    }
 
     public String getType() {
         return type;
@@ -36,13 +60,7 @@ public class ChatMessageModel {
         this.type = type;
     }
 
-    public String getTo() {
-        return to;
-    }
 
-    public void setTo(String to) {
-        this.to = to;
-    }
 
     public ChatMessageModel(String text, String author, Date createDate) {
         this.text = text;
@@ -50,11 +68,11 @@ public class ChatMessageModel {
         this.createDate = createDate;
     }
 
-    public ChatMessageModel(String text, String author, Date createDate, String type) {
+    public ChatMessageModel(String text, String author, Date createDate, String room) {
         this.text = text;
         this.author = author;
         this.createDate = createDate;
-        this.type = type;
+        this.room = room;
     }
 
     public String getText() {

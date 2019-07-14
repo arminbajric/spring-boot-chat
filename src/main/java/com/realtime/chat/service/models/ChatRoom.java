@@ -8,14 +8,18 @@ public class ChatRoom {
     @Id
     private String id;
     String room;
-    List<UsersModel> users;
+
 
     public ChatRoom() {
     }
 
+    public ChatRoom(String room) {
+        this.room = room;
+    }
+
     public ChatRoom(String room, List<UsersModel> users) {
         this.room = room;
-        this.users = users;
+
     }
 
     public String getRoom() {
@@ -26,11 +30,4 @@ public class ChatRoom {
         this.room = room;
     }
 
-    public List<UsersModel> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<UsersModel> users) {
-        this.users = users;
-    }
 }

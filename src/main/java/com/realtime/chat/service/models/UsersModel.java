@@ -6,11 +6,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(value = "users")
 public class UsersModel {
     @Id
-    private long Id;
+    private String Id;
     private String email;
     private String username;
     private String password;
-    private boolean online;
+
+    public UsersModel() {
+    }
+
+    public UsersModel(String email, String username, String password) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+    }
+
+    public UsersModel(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
 
     public String getEmail() {
         return email;
@@ -36,11 +49,5 @@ public class UsersModel {
         this.password = password;
     }
 
-    public boolean isOnline() {
-        return online;
-    }
 
-    public void setOnline(boolean online) {
-        this.online = online;
-    }
 }

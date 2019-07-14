@@ -9,9 +9,10 @@ import java.util.List;
 
 public interface OnlineRepository extends MongoRepository<OnlineUsers,String> {
     boolean existsByUsername(String username);
+    OnlineUsers getByEmail(String email);
+    void deleteOnlineUsersBySessionid(String sessionid);
 
 
 
-    void deleteOnlineUsersBySessionid(String id);
 
 }
